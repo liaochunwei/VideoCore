@@ -4,8 +4,8 @@
 #include <videocore/filters/Basic/InvertColorsVideoFilter.h>
 #include <videocore/filters/Basic/SepiaVideoFilter.h>
 #include <videocore/filters/Basic/FisheyeVideoFilter.h>
-#include "BeautyVideoFilter.hpp"
-#include "AntiqueVideoFilter.hpp"
+#include <videocore/filters/Basic/BeautyVideoFilter.h>
+#include <videocore/filters/Basic/AntiqueVideoFilter.h>
 
 namespace videocore {
     std::map<std::string, InstantiateFilter>* FilterFactory::s_registration = nullptr ;
