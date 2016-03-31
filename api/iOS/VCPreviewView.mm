@@ -93,6 +93,8 @@
     
     if(!self.context) {
         NSLog(@"Context creation failed");
+    } else {
+        NSLog(@"Context creation succeeded");
     }
     self.autoresizingMask = 0xFF;
     

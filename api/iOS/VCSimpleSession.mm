@@ -264,17 +264,8 @@ namespace videocore { namespace simpleApi {
 - (void) setRtmpSessionState:(VCSessionState)rtmpSessionState
 {
     _rtmpSessionState = rtmpSessionState;
-    if (NSOperationQueue.currentQueue != NSOperationQueue.mainQueue) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            // trigger in main thread, avoid autolayout engine exception
-            if(self.delegate) {
-                [self.delegate connectionStatusChanged:rtmpSessionState];
-            }
-        });
-    } else {
-        if (self.delegate) {
-            [self.delegate connectionStatusChanged:rtmpSessionState];
-        }
+    if(self.delegate) {
+        [self.delegate connectionStatusChanged:rtmpSessionState];
     }
 }
 - (VCSessionState) rtmpSessionState
@@ -300,10 +291,10 @@ namespace videocore { namespace simpleApi {
 }
 - (void) setAudioChannelCount:(int)channelCount
 {
-    _audioChannelCount = MAX(1, MIN(channelCount, 2));
+    _audioChannelCount = MIN(2, MAX(channelCount,2)); // We can only support a channel count of 2 with AAC
 
     if(m_audioMixer) {
-        m_audioMixer->setChannelCount(_audioChannelCount);
+        m_audioMixer->setChannelCount(channelCount);
     }
 }
 - (int) audioChannelCount
@@ -532,7 +523,7 @@ namespace videocore { namespace simpleApi {
 {
     std::stringstream uri ;
     uri << (rtmpUrl ? [rtmpUrl UTF8String] : "") << "/" << (streamKey ? [streamKey UTF8String] : "");
-    
+
     m_outputSession.reset(
                           new videocore::RTMPSession ( uri.str(),
                                                       [=](videocore::RTMPSession& session,
@@ -569,7 +560,7 @@ namespace videocore { namespace simpleApi {
 
                                                           }
 
-                                                      }) );
+                                                      }));
     VCSimpleSession* bSelf = self;
 
     _bpsCeiling = _bitrate;
@@ -592,8 +583,6 @@ namespace videocore { namespace simpleApi {
                                                   if ([bSelf.delegate respondsToSelector:@selector(detectedThroughput:videoRate:)]) {
                                                       [bSelf.delegate detectedThroughput:predicted videoRate:video->bitrate()];
                                                   }
-
-
                                                   int videoBr = 0;
 
                                                   if(vector != 0) {
@@ -691,6 +680,10 @@ namespace videocore { namespace simpleApi {
                 break;
             case VCFilterBeauty:
                 filterName = @"com.videocore.filters.beauty";
+                break;
+            case VCFilterAntique:
+                filterName = @"com.videocore.filters.antique";
+                break;
             default:
                 break;
         }
