@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
   s.homepage            = "https://github.com/jgh-/VideoCore"
   s.license             = 'MIT'
   s.authors             = { "James Hurley" => "jamesghurley@gmail.com" }
-  s.source              = { :git => "https://github.com/jgh-/VideoCore.git", :tag => s.version.to_s }
+  s.source              = { :git => "https://github.com/liaochunwei/VideoCore.git", :tag => s.version.to_s }
 
   s.requires_arc        = false
 

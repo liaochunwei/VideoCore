@@ -6,7 +6,7 @@
 //
 //
 
-#include <videocore/filters/Basic/BeautyVideoFilter.hpp>
+#include "BeautyVideoFilter.hpp"
 
 #include <TargetConditionals.h>
 
@@ -88,6 +88,8 @@ namespace videocore { namespace filters {
         glDeleteVertexArrays(1, &m_vao);
     }
     
+    
+    
     const char * const
     BeautyVideoFilter::vertexKernel() const
     {
@@ -139,6 +141,8 @@ namespace videocore { namespace filters {
                
                void main(){
                    vec2 blurCoordinates[24];
+                   vec4 blurColor;
+                   vec3 orgColor;
                    
                    blurCoordinates[0] = textureCoordinate.xy + singleStepOffset * vec2(0.0, -10.0);
                    blurCoordinates[1] = textureCoordinate.xy + singleStepOffset * vec2(0.0, 10.0);
@@ -160,18 +164,57 @@ namespace videocore { namespace filters {
                    blurCoordinates[14] = textureCoordinate.xy + singleStepOffset * vec2(6.0, 0.0);
                    blurCoordinates[15] = textureCoordinate.xy + singleStepOffset * vec2(-6.0, 0.0);
                    
-                   blurCoordinates[16] = textureCoordinate.xy + singleStepOffset * vec2(-4.0, -4.0);
-                   blurCoordinates[17] = textureCoordinate.xy + singleStepOffset * vec2(-4.0, 4.0);
-                   blurCoordinates[18] = textureCoordinate.xy + singleStepOffset * vec2(4.0, -4.0);
-                   blurCoordinates[19] = textureCoordinate.xy + singleStepOffset * vec2(4.0, 4.0);
+                   blurCoordinates[16] = textureCoordinate.xy + singleStepOffset * vec2(-2.0, 0.0);
+                   blurCoordinates[17] = textureCoordinate.xy + singleStepOffset * vec2(2.0, 0.0);
+                   blurCoordinates[18] = textureCoordinate.xy + singleStepOffset * vec2(0.0, -2.0);
+                   blurCoordinates[19] = textureCoordinate.xy + singleStepOffset * vec2(0.0, 2.0);
                    
                    blurCoordinates[20] = textureCoordinate.xy + singleStepOffset * vec2(-2.0, -2.0);
                    blurCoordinates[21] = textureCoordinate.xy + singleStepOffset * vec2(-2.0, 2.0);
                    blurCoordinates[22] = textureCoordinate.xy + singleStepOffset * vec2(2.0, -2.0);
                    blurCoordinates[23] = textureCoordinate.xy + singleStepOffset * vec2(2.0, 2.0);
                    
+                   vec4 centralColor = texture2D(inputImageTexture,textureCoordinate);
+                   float gaussianWeightTotal = 0.18;
+                   vec4 sum = centralColor * 0.18;
+                   float distanceFromCenterColor;
+                   vec4 sampleColor;
+                   float distanceNormalizationFactor = 8.0;
+                   float gaussianWeight;
                    
-                   float sampleColor = texture2D(inputImageTexture, textureCoordinate).g * 22.0;
+                   for(int i = 16; i < 24; i++)
+                   {
+                       sampleColor = texture2D(inputImageTexture,blurCoordinates[i]);
+                       distanceFromCenterColor = min(distance(centralColor,sampleColor)*distanceNormalizationFactor,1.0);
+                       gaussianWeight = 0.12 * (1.3 - distanceFromCenterColor);
+                       gaussianWeightTotal += gaussianWeight;
+                       sum += sampleColor * gaussianWeight;
+                   }
+                   
+                   sum = sum / gaussianWeightTotal;
+                   float mfac = 0.5 * exp(-distance(sum,centralColor)/0.05);
+                   blurColor = mix(centralColor,sum,0.5);
+                   
+           
+                      lowp float Y = 0.299* blurColor.r+0.578 * blurColor.g+0.114 * blurColor.b;
+                    lowp float Cr= 0.5 * blurColor.r - 0.4187 * blurColor.g - 0.0813 * blurColor.b + 0.5;
+                     lowp float Cb= -0.1687 * blurColor.r - 0.3313 * blurColor.g + 0.5 * blurColor.b + 0.5;
+                   
+                   
+                    lowp float rt = (Cb - 0.398)*(Cb-0.398) + (Cr - 0.598)*(Cr-0.598);
+                     lowp float rx = exp(-rt*10.0);
+                   
+                lowp vec3 lp1 = vec3(pow(blurColor.r,0.6/rx/rx),pow(blurColor.g,0.6/rx/rx),pow(blurColor.b,0.5/rx/rx));
+                   
+                    lowp vec3 dp = blurColor.rgb - lp1;
+                      lowp float dpl = length(dp.rgb);
+                      lowp float dmp = length(blurColor.rgb);
+                
+                      lowp vec3 rp = mix(lp1.rgb,blurColor.rgb,dpl/dmp);
+                   
+                   gl_FragColor = vec4(rp.rgb, blurColor.w);
+                   
+              /*       float sampleColor = texture2D(inputImageTexture, textureCoordinate).g * 22.0;
                    sampleColor += texture2D(inputImageTexture, blurCoordinates[0]).g;
                    sampleColor += texture2D(inputImageTexture, blurCoordinates[1]).g;
                    sampleColor += texture2D(inputImageTexture, blurCoordinates[2]).g;
@@ -201,6 +244,77 @@ namespace videocore { namespace filters {
                    
                    sampleColor = sampleColor / 62.0;
                    
+                   blurColor.g = sampleColor;
+                   
+                   
+                   sampleColor = texture2D(inputImageTexture, textureCoordinate).r * 22.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[0]).r;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[1]).r;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[2]).r;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[3]).r;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[4]).r;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[5]).r;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[6]).r;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[7]).r;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[8]).r;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[9]).r;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[10]).r;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[11]).r;
+                   
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[12]).r * 2.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[13]).r * 2.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[14]).r * 2.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[15]).r * 2.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[16]).r * 2.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[17]).r * 2.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[18]).r * 2.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[19]).r * 2.0;
+                   
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[20]).r * 3.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[21]).r * 3.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[22]).r * 3.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[23]).r * 3.0;
+                   
+                   sampleColor = sampleColor / 62.0;
+                   blurColor.r = sampleColor;
+                   
+                   sampleColor = texture2D(inputImageTexture, textureCoordinate).b * 22.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[0]).b;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[1]).b;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[2]).b;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[3]).b;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[4]).b;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[5]).b;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[6]).b;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[7]).b;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[8]).b;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[9]).b;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[10]).b;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[11]).b;
+                   
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[12]).b * 2.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[13]).b * 2.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[14]).b * 2.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[15]).b * 2.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[16]).b * 2.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[17]).b * 2.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[18]).b * 2.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[19]).b * 2.0;
+                   
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[20]).b * 3.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[21]).b * 3.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[22]).b * 3.0;
+                   sampleColor += texture2D(inputImageTexture, blurCoordinates[23]).b * 3.0;
+                   
+                   sampleColor = sampleColor / 62.0;
+                   blurColor.b = sampleColor;
+                   
+                   orgColor = texture2D(inputImageTexture, textureCoordinate).rgb;
+                   
+                   gl_FragColor = vec4(mix(blurColor,orgColor,0.5),1.0);
+                   
+                  
+            
                    vec3 centralColor = texture2D(inputImageTexture, textureCoordinate).rgb;
                    
                    float highpass = centralColor.g - sampleColor + 0.5;
@@ -219,7 +333,11 @@ namespace videocore { namespace filters {
                    smoothColor.g = clamp(pow(smoothColor.g, params.g),0.0,1.0);
                    smoothColor.b = clamp(pow(smoothColor.b, params.g),0.0,1.0);
                    
+                   
+                   
                    vec3 lvse = vec3(1.0)-(vec3(1.0)-smoothColor)*(vec3(1.0)-centralColor);
+                   
+             
                    vec3 bianliang = max(smoothColor, centralColor);
                    vec3 rouguang = 2.0*centralColor*smoothColor + centralColor*centralColor - 2.0*centralColor*centralColor*smoothColor;
                    
@@ -228,12 +346,15 @@ namespace videocore { namespace filters {
                    gl_FragColor.rgb = mix(gl_FragColor.rgb, rouguang, params.b);
                    
                    vec3 satcolor = gl_FragColor.rgb * saturateMatrix;
-                   gl_FragColor.rgb = mix(gl_FragColor.rgb, satcolor, params.a);
+                   gl_FragColor.rgb = mix(gl_FragColor.rgb, satcolor, params.a);*/
                }
                )
         
         return nullptr;
     }
+    
+    
+    
     void
     BeautyVideoFilter::initialize()
     {
@@ -287,7 +408,7 @@ namespace videocore { namespace filters {
                 glUniform2fv(m_uWH, 1, fWHArray);
                 
                 GLfloat fBeautyParam[4];
-                getBeautyParam(fBeautyParam, LIVE_BEAUTY_LEVEL5);
+                getBeautyParam(fBeautyParam, LIVE_BEAUTY_LEVEL1);
                 glUniform4fv(m_beautyParam, 1, fBeautyParam);
                 break;
             case GL_3:
