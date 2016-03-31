@@ -24,7 +24,7 @@ Pod::Spec.new do |s|
                             'system/**/*.h*', 'system/**/*.cpp', 'system/**/*.m*',
                             'transforms/**/*.h*', 'transforms/**/*.cpp', 'transforms/**/*.m*',
                             'api/**/*.h*', 'api/**/*.m*',
-                            'filters/**/*.cpp', 'filters/**/*.h*' ]
+                            'filters/**/*.cpp', 'filters/**/*.h*' ,'rtmp_m/**/*.h*','rtmp_m/**/*.cpp','include/**/*.h*']
 
   s.frameworks          = [ 'VideoToolbox', 'AudioToolbox', 'AVFoundation', 'CFNetwork', 'CoreMedia',
                             'CoreVideo', 'OpenGLES', 'Foundation', 'CoreGraphics' ]

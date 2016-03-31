@@ -149,7 +149,7 @@ namespace videocore { namespace iOS {
         bool m_torchOn;
         bool m_useInterfaceOrientation;
         bool m_orientationLocked;
-
+        bool m_bCameraFontFlag;
     };
     
 }

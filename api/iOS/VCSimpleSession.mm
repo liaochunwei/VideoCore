@@ -52,6 +52,8 @@
 #   include <videocore/mixers/GenericAudioMixer.h>
 #endif
 
+#include "LibRtmpSessionMgr.hpp"
+
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 
 
@@ -525,8 +527,8 @@ namespace videocore { namespace simpleApi {
     uri << (rtmpUrl ? [rtmpUrl UTF8String] : "") << "/" << (streamKey ? [streamKey UTF8String] : "");
 
     m_outputSession.reset(
-                          new videocore::RTMPSession ( uri.str(),
-                                                      [=](videocore::RTMPSession& session,
+                          new videocore::LibRtmpSessionMgr ( uri.str(),
+                                                      [=](videocore::LibRtmpSessionMgr& session,
                                                           ClientState_t state) {
 
                                                           DLog("ClientState: %d\n", state);
@@ -535,6 +537,9 @@ namespace videocore { namespace simpleApi {
 
                                                               case kClientStateConnected:
                                                                   self.rtmpSessionState = VCSessionStateStarting;
+                                                                  break;
+                                                              case kClientStateHandshake0:
+                                                                  self.rtmpSessionState = VCSessionStatePreviewStarted;
                                                                   break;
                                                               case kClientStateSessionStarted:
                                                               {
@@ -550,6 +555,7 @@ namespace videocore { namespace simpleApi {
                                                               case kClientStateError:
                                                                   self.rtmpSessionState = VCSessionStateError;
                                                                   [self endRtmpSession];
+                                                                  self->m_outputSession.reset();
                                                                   break;
                                                               case kClientStateNotConnected:
                                                                   self.rtmpSessionState = VCSessionStateEnded;
@@ -583,6 +589,8 @@ namespace videocore { namespace simpleApi {
                                                   if ([bSelf.delegate respondsToSelector:@selector(detectedThroughput:videoRate:)]) {
                                                       [bSelf.delegate detectedThroughput:predicted videoRate:video->bitrate()];
                                                   }
+                                                  
+
                                                   int videoBr = 0;
 
                                                   if(vector != 0) {
@@ -623,7 +631,7 @@ namespace videocore { namespace simpleApi {
 
                                           });
 
-    videocore::RTMPSessionParameters_t sp ( 0. );
+    videocore::LibRTMPSessionParameters_t sp ( 0. );
 
     sp.setData(self.videoSize.width,
                self.videoSize.height,
@@ -671,12 +679,6 @@ namespace videocore { namespace simpleApi {
                 break;
             case VCFilterSepia:
                 filterName = @"com.videocore.filters.sepia";
-                break;
-            case VCFilterFisheye:
-                filterName = @"com.videocore.filters.fisheye";
-                break;
-            case VCFilterGlow:
-                filterName = @"com.videocore.filters.glow";
                 break;
             case VCFilterBeauty:
                 filterName = @"com.videocore.filters.beauty";

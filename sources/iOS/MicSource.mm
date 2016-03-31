@@ -96,7 +96,7 @@ namespace videocore { namespace iOS {
             if(granted) {
 
                 //add bluetooth support
-                [session setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionDefaultToSpeaker | AVAudioSessionCategoryOptionMixWithOthers | AVAudioSessionCategoryOptionAllowBluetooth error:nil];                //[session setMode:AVAudioSessionModeVideoChat error:nil];
+                [session setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionDefaultToSpeaker | AVAudioSessionCategoryOptionMixWithOthers | AVAudioSessionCategoryOptionAllowBluetooth error:nil]; 
                 [session setActive:YES error:nil];
                 
                 AudioComponentDescription acd;
@@ -109,10 +109,6 @@ namespace videocore { namespace iOS {
                 bThis->m_component = AudioComponentFindNext(NULL, &acd);
                 
                 AudioComponentInstanceNew(bThis->m_component, &bThis->m_audioUnit);
-                if(!bThis->m_audioUnit) {
-                    DLog("AudioComponentInstanceNew failed");
-                    return ;
-                }
                 
                 if(excludeAudioUnit) {
                     excludeAudioUnit(bThis->m_audioUnit);

@@ -83,7 +83,8 @@ namespace videocore { namespace iOS {
     m_orientationLocked(false),
     m_torchOn(false),
     m_useInterfaceOrientation(false),
-    m_captureSession(nullptr)
+    m_captureSession(nullptr),
+    m_bCameraFontFlag(false)
     {}
     
     CameraSource::~CameraSource()
@@ -295,10 +296,12 @@ namespace videocore { namespace iOS {
             AVCaptureDevice *newCamera = nil;
             if(((AVCaptureDeviceInput*)currentCameraInput).device.position == AVCaptureDevicePositionBack)
             {
+                m_bCameraFontFlag = true;
                 newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionFront);
             }
             else
             {
+                m_bCameraFontFlag = false;
                 newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionBack);
             }
             
@@ -335,7 +338,11 @@ namespace videocore { namespace iOS {
         
         for (AVCaptureVideoDataOutput* output in session.outputs) {
             for (AVCaptureConnection * av in output.connections) {
-                
+                if (m_bCameraFontFlag) {
+                    av.videoMirrored = YES;
+                }else{
+                    av.videoMirrored = NO;
+                }
                 switch (orientation) {
                         // UIInterfaceOrientationPortraitUpsideDown, UIDeviceOrientationPortraitUpsideDown
                     case UIInterfaceOrientationPortraitUpsideDown:
