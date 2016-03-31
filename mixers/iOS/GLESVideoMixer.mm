@@ -538,6 +538,7 @@ namespace videocore { namespace iOS {
                             }
                             if(texture && currentFilter) {
                                 currentFilter->incomingMatrix(this->m_sourceMats[*it]);
+                                currentFilter->imageDimensions(2.0/m_frameW, 2.0/m_frameH);
                                 currentFilter->bind();
                                 glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(texture));
                                 glDrawArrays(GL_TRIANGLES, 0, 6);
