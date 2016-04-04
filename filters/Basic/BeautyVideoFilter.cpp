@@ -186,14 +186,15 @@ namespace videocore { namespace filters {
                    {
                        sampleColor = texture2D(inputImageTexture,blurCoordinates[i]);
                        distanceFromCenterColor = min(distance(centralColor,sampleColor)*distanceNormalizationFactor,1.0);
-                       gaussianWeight = 0.12 * (1.3 - distanceFromCenterColor);
+                       gaussianWeight = 0.12 * (1.1 - distanceFromCenterColor);
                        gaussianWeightTotal += gaussianWeight;
                        sum += sampleColor * gaussianWeight;
                    }
                    
                    sum = sum / gaussianWeightTotal;
                    float mfac = 0.5 * exp(-distance(sum,centralColor)/0.05);
-                   blurColor = mix(centralColor,sum,0.5);
+                   lowp float YY = 0.299* centralColor.r+0.578 * centralColor.g+0.114 * centralColor.b;
+                   blurColor = mix(centralColor,sum,0.7);
                    
            
                       lowp float Y = 0.299* blurColor.r+0.578 * blurColor.g+0.114 * blurColor.b;
@@ -204,159 +205,34 @@ namespace videocore { namespace filters {
                     lowp float rt = (Cb - 0.398)*(Cb-0.398) + (Cr - 0.598)*(Cr-0.598);
                      lowp float rx = exp(-rt*10.0);
                    
-                lowp vec3 lp1 = vec3(pow(blurColor.r,0.6/rx/rx),pow(blurColor.g,0.6/rx/rx),pow(blurColor.b,0.5/rx/rx));
+                  // float nY = pow(Y,0.6/rx/rx);
                    
+                 //  float R = nY + 1.402*(Cr - 0.5);
+                 //  float G = nY - 0.34414*(Cb - 0.5) - 0.71414*(Cr-0.5);
+                 //  float B = nY + 1.772*(Cb-0.5);
+                   
+                lowp vec3 lp1 = vec3(pow(blurColor.r,0.6/rx/rx),pow(blurColor.g,0.6/rx/rx),pow(blurColor.b,0.5/rx/rx));
+               //    lowp vec3 lp1 = vec3(R,G,B);
                     lowp vec3 dp = blurColor.rgb - lp1;
                       lowp float dpl = length(dp.rgb);
                       lowp float dmp = length(blurColor.rgb);
+                   
+                   //lowp float m_fac = max(dpl/dmp,1.42*(0.7-Y));
+                   lowp vec3 rp = mix(lp1.rgb,blurColor.rgb,dpl/dmp + (1.0-dpl/dmp)*(1.0-Y)*(1.0-Y));
+             
                 
-                      lowp vec3 rp = mix(lp1.rgb,blurColor.rgb,dpl/dmp);
+                     // lowp vec3 rp = mix(lp1.rgb,blurColor.rgb,max(dpl/dmp,1.42*(0.7-Y)));
                    
                    gl_FragColor = vec4(rp.rgb, blurColor.w);
-                   
-              /*       float sampleColor = texture2D(inputImageTexture, textureCoordinate).g * 22.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[0]).g;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[1]).g;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[2]).g;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[3]).g;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[4]).g;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[5]).g;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[6]).g;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[7]).g;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[8]).g;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[9]).g;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[10]).g;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[11]).g;
-                   
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[12]).g * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[13]).g * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[14]).g * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[15]).g * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[16]).g * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[17]).g * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[18]).g * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[19]).g * 2.0;
-                   
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[20]).g * 3.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[21]).g * 3.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[22]).g * 3.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[23]).g * 3.0;
-                   
-                   sampleColor = sampleColor / 62.0;
-                   
-                   blurColor.g = sampleColor;
-                   
-                   
-                   sampleColor = texture2D(inputImageTexture, textureCoordinate).r * 22.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[0]).r;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[1]).r;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[2]).r;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[3]).r;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[4]).r;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[5]).r;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[6]).r;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[7]).r;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[8]).r;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[9]).r;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[10]).r;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[11]).r;
-                   
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[12]).r * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[13]).r * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[14]).r * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[15]).r * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[16]).r * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[17]).r * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[18]).r * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[19]).r * 2.0;
-                   
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[20]).r * 3.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[21]).r * 3.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[22]).r * 3.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[23]).r * 3.0;
-                   
-                   sampleColor = sampleColor / 62.0;
-                   blurColor.r = sampleColor;
-                   
-                   sampleColor = texture2D(inputImageTexture, textureCoordinate).b * 22.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[0]).b;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[1]).b;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[2]).b;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[3]).b;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[4]).b;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[5]).b;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[6]).b;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[7]).b;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[8]).b;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[9]).b;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[10]).b;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[11]).b;
-                   
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[12]).b * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[13]).b * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[14]).b * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[15]).b * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[16]).b * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[17]).b * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[18]).b * 2.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[19]).b * 2.0;
-                   
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[20]).b * 3.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[21]).b * 3.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[22]).b * 3.0;
-                   sampleColor += texture2D(inputImageTexture, blurCoordinates[23]).b * 3.0;
-                   
-                   sampleColor = sampleColor / 62.0;
-                   blurColor.b = sampleColor;
-                   
-                   orgColor = texture2D(inputImageTexture, textureCoordinate).rgb;
-                   
-                   gl_FragColor = vec4(mix(blurColor,orgColor,0.5),1.0);
-                   
                   
-            
-                   vec3 centralColor = texture2D(inputImageTexture, textureCoordinate).rgb;
-                   
-                   float highpass = centralColor.g - sampleColor + 0.5;
-                   
-                   for(int i = 0; i < 5;i++)
-                   {
-                       highpass = hardlight(highpass);
-                   }
-                   float lumance = dot(centralColor, W);
-                   
-                   float alpha = pow(lumance, params.r);
-                   
-                   vec3 smoothColor = centralColor + (centralColor-vec3(highpass))*alpha*0.1;
-                   
-                   smoothColor.r = clamp(pow(smoothColor.r, params.g),0.0,1.0);
-                   smoothColor.g = clamp(pow(smoothColor.g, params.g),0.0,1.0);
-                   smoothColor.b = clamp(pow(smoothColor.b, params.g),0.0,1.0);
-                   
-                   
-                   
-                   vec3 lvse = vec3(1.0)-(vec3(1.0)-smoothColor)*(vec3(1.0)-centralColor);
-                   
-             
-                   vec3 bianliang = max(smoothColor, centralColor);
-                   vec3 rouguang = 2.0*centralColor*smoothColor + centralColor*centralColor - 2.0*centralColor*centralColor*smoothColor;
-                   
-                   gl_FragColor = vec4(mix(centralColor, lvse, alpha), 1.0);
-                   gl_FragColor.rgb = mix(gl_FragColor.rgb, bianliang, alpha);
-                   gl_FragColor.rgb = mix(gl_FragColor.rgb, rouguang, params.b);
-                   
-                   vec3 satcolor = gl_FragColor.rgb * saturateMatrix;
-                   gl_FragColor.rgb = mix(gl_FragColor.rgb, satcolor, params.a);*/
                }
-               )
-        
+            )
         return nullptr;
     }
     
     
     
-    void
-    BeautyVideoFilter::initialize()
+    void BeautyVideoFilter::initialize()
     {
         switch(m_language) {
             case GL_ES2_3:
@@ -385,8 +261,7 @@ namespace videocore { namespace filters {
                 break;
         }
     }
-    void
-    BeautyVideoFilter::bind()
+    void BeautyVideoFilter::bind()
     {
         switch(m_language) {
             case GL_ES2_3:
@@ -415,10 +290,8 @@ namespace videocore { namespace filters {
                 break;
         }
     }
-    void
-    BeautyVideoFilter::unbind()
+    void BeautyVideoFilter::unbind()
     {
         m_bound = false;
     }
-}
-}
+}}
